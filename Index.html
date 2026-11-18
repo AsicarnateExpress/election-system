@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Election System</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f1f5fd;--card:#fff;--ink:#14203a;--mute:#66728f;--line:#dde4f3;--blue:#1d6bff;--bsoft:#dbe7ff;--green:#1f9d6b;--gsoft:#d9f4e8;--red:#e5484d;--rsoft:#fde3e4;--gold:#f5b301;--side:linear-gradient(180deg,#1d6bff,#0f4fd6)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1326;--card:#161e38;--ink:#eaeefb;--mute:#93a0c6;--line:#28325a;--bsoft:#1f2f66;--gsoft:#123a30;--rsoft:#4a1c24;--side:linear-gradient(180deg,#1b3f99,#122a6b)}}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+h1,h2,h3{margin:0;letter-spacing:-.02em}
+.center{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login{width:100%;max-width:400px;background:var(--card);border-radius:28px;padding:28px 24px;box-shadow:0 20px 50px -24px rgba(29,107,255,.5);border:1px solid var(--line)}
+.logo{width:56px;height:56px;border-radius:18px;background:var(--side);display:grid;place-items:center;font-size:28px;margin-bottom:14px}
+.login h1{font-size:28px;font-weight:800}.login p{color:var(--mute);margin:6px 0 18px}
+input,select{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);margin:0 0 10px}
+.btn{padding:12px 16px;border-radius:12px;font-weight:600;background:var(--blue);color:#fff;width:100%}
+.btn.sm{width:auto;padding:8px 12px;font-size:13px}
+.btn.g{background:var(--green)}.btn.r{background:var(--red)}.btn.gray{background:var(--mute)}.btn.soft{background:var(--bsoft);color:var(--blue)}
+.link{background:none;color:var(--blue);font-weight:600;margin-top:12px;width:100%;padding:8px}
+.err{color:var(--red);font-weight:600;margin:0 0 10px;font-size:14px}
+.adm{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside{background:var(--side);color:#fff;padding:20px 12px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+aside h2{font-size:20px;padding:0 10px 14px}
+aside button{display:flex;gap:10px;align-items:center;background:none;color:#fff;padding:11px 12px;border-radius:12px;text-align:left;font-weight:600;opacity:.9}
+aside button.on{background:rgba(255,255,255,.2);opacity:1}
+aside .out{margin-top:auto;background:var(--red)}
+main{padding:22px;min-width:0}
+main>h1{font-size:26px;font-weight:800;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:16px;box-shadow:0 10px 26px -20px rgba(20,32,58,.5)}
+.card h3{font-size:16px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.stat b{display:block;font-size:28px;font-weight:800;color:var(--blue)}.stat span{color:var(--mute);font-size:13px}
+.chart{display:flex;align-items:flex-end;gap:14px;height:220px;padding:10px 4px 0;border-bottom:2px solid var(--line);overflow-x:auto}
+.col{flex:1;min-width:64px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.bar{width:100%;max-width:90px;border-radius:12px 12px 0 0;display:flex;justify-content:center;color:#fff;font-weight:800;min-height:22px;transition:height .6s}
+.lbl{font-size:12px;color:var(--mute);text-align:center;margin:6px 0 0;line-height:1.2;height:32px;overflow:hidden}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--bsoft);text-align:left;padding:10px;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line)}
+.badge{font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
+.badge.u{background:var(--rsoft);color:var(--red)}.badge.n{background:var(--gsoft);color:var(--green)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.pos-h{background:var(--blue);color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;margin:14px 0 6px}
+.cr{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.cr span.n{flex:1;font-weight:600}
+.av{flex:none;width:44px;height:44px;border-radius:50%;background:var(--bsoft);color:var(--blue);display:grid;place-items:center;font-weight:800;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.vote{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+.pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px;margin-bottom:10px;transition:transform .1s,border-color .15s}
+.pick:active{transform:scale(.985)}
+.pick.on{border-color:var(--blue);background:var(--bsoft)}
+.pick .chk{margin-left:auto;width:26px;height:26px;border-radius:50%;border:2px solid var(--mute);display:grid;place-items:center;color:#fff;font-weight:800}
+.pick.on .chk{background:var(--blue);border-color:var(--blue)}
+.sheet{max-width:640px;margin:0 auto;background:#fff;color:#111;border:2px solid #222;padding:22px}
+.rt{width:100%;margin:12px 0 4px;color:#111}.rt th{background:#eef1f7;text-align:center}.rt td{border-bottom:1px solid #ddd}
+.top{background:#fff8dc;padding:8px 10px;border-radius:8px;font-size:14px;margin-bottom:14px}
+.bar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:all .25s;z-index:9}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:760px){.adm{grid-template-columns:1fr}aside{position:sticky;top:0;height:auto;flex-direction:row;overflow-x:auto;padding:10px;z-index:5;gap:4px;padding-top:calc(10px + env(safe-area-inset-top,0px))}aside h2{display:none}aside button{white-space:nowrap;padding:9px 12px}aside .out{margin:0}main{padding:16px}.grid2{grid-template-columns:1fr}:root{padding-top:0}}
+@media print{aside,.bar-actions,.toast{display:none!important}.adm{display:block}body{background:#fff}main{padding:0}.sheet{border:2px solid #222}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const K="election-v1",$=s=>document.querySelector(s),app=$("#app");
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const seed=()=>({pw:"admin123",n:3,
+ pos:[{id:"p1",name:"President",max:1},{id:"p2",name:"Vice President",max:1}],
+ cand:[{id:"c1",name:"Alex Rivera",pos:"p1"},{id:"c2",name:"Maya Santos",pos:"p1"},{id:"c3",name:"Jordan Lee",pos:"p2"},{id:"c4",name:"Sam Carter",pos:"p2"}],
+ voters:[{id:"2026-001",code:"482913",name:"Demo Voter",addr:"Block 1",used:false},{id:"2026-002",code:"715204",name:"Sample Voter",addr:"Block 2",used:false}],t:{}});
+let D;try{D=JSON.parse(localStorage.getItem(K))||seed()}catch(e){D=seed()}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){toast("Storage is full. Use smaller photos.")}};
+let ses={role:null,v:null,page:"dash",sel:{},q:"",msg:"",photo:""};
+const tl=id=>D.t[id]||0,uid=()=>Math.random().toString(36).slice(2,8);
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2000)}
+function code(){let c;do c=String(100000+Math.random()*900000|0);while(D.voters.some(v=>v.code==c));return c}
+function addVoter(name,addr){if(!name)return;D.voters.push({id:"2026-"+String(D.n++).padStart(3,"0"),code:code(),name,addr:addr||"",used:false})}
+const av=c=>`<span class="av">${c.photo?`<img src="${c.photo}" alt="">`:esc(c.name.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase())}</span>`;
+
+function vLogin(admin){return `<div class="center"><div class="login"><div class="logo">🗳️</div><h1>${admin?"Admin sign in":"Cast your vote"}</h1><p>${admin?"Enter the admin password.":"Enter the V-CODE you were given."}</p>${ses.msg?`<p class="err">${esc(ses.msg)}</p>`:""}<input id="${admin?"pw":"code"}" type="${admin?"password":"text"}" inputmode="${admin?"text":"numeric"}" placeholder="${admin?"Password":"V-CODE"}" autocomplete="off"><button class="btn" data-a="${admin?"alogin":"vlogin"}">${admin?"Sign in":"Start voting"}</button><button class="link" data-a="${admin?"home":"toadmin"}">${admin?"Back to voter login":"Admin login"}</button></div></div>`}
+
+function vVote(){let h=`<div class="vote"><h1 style="font-size:26px;font-weight:800">Hello, ${esc(ses.v.name)}</h1><p style="color:var(--mute)">Choose your candidates, then submit your ballot.</p>`;
+ D.pos.forEach(p=>{h+=`<div class="pos-h">${esc(p.name)} · choose up to ${p.max}</div>`;
+  D.cand.filter(c=>c.pos==p.id).forEach(c=>{const on=(ses.sel[p.id]||[]).includes(c.id);h+=`<button class="pick ${on?"on":""}" data-a="pick" data-p="${p.id}" data-c="${c.id}" aria-pressed="${on}">${av(c)}<b>${esc(c.name)}</b><span class="chk">${on?"✓":""}</span></button>`})});
+ return h+`<button class="btn g" data-a="submit">Submit ballot</button><button class="link" data-a="home">Cancel</button></div>`}
+
+function vDone(){return `<div class="center"><div class="login" style="text-align:center"><div class="logo" style="margin:0 auto 14px">✅</div><h1>Vote recorded</h1><p>Thank you for voting. Your V-CODE can’t be used again.</p><button class="btn" data-a="home">Done</button></div></div>`}
+
+const nav=[["dash","Dashboard","📊"],["voters","Voters","👥"],["pos","Positions","🗂️"],["cand","Candidates","🧑"],["results","Results","📈"],["about","About Admin","ℹ️"]];
+function layout(inner){return `<div class="adm"><aside><h2>Admin</h2>${nav.map(n=>`<button class="${ses.page==n[0]?"on":""}" data-a="nav" data-i="${n[0]}">${n[2]} ${n[1]}</button>`).join("")}<button class="out" data-a="home">⎋ Logout</button></aside><main>${inner}</main></div>`}
+
+function pDash(){const cs=D.cand,mx=Math.max(1,...cs.map(c=>tl(c.id))),cols=["#1d6bff","#1f9d6b","#f5b301","#e5484d","#8a5bff"],used=D.voters.filter(v=>v.used).length;
+ return `<h1>Dashboard</h1><div class="stats"><div class="stat"><b>${D.voters.length}</b><span>Registered voters</span></div><div class="stat"><b>${used}</b><span>Have voted</span></div><div class="stat"><b>${D.pos.length}</b><span>Positions</span></div><div class="stat"><b>${cs.length}</b><span>Candidates</span></div></div><div class="card"><h3>Top candidates</h3><div class="chart">${cs.map((c,i)=>`<div class="col"><div class="bar" style="height:${tl(c.id)/mx*88}%;background:${cols[i%5]}">${tl(c.id)}</div><p class="lbl">${esc(c.name)}</p></div>`).join("")||'<p class="lbl">No candidates yet.</p>'}</div></div>`}
+
+function pVoters(){const q=ses.q.toLowerCase(),L=D.voters.filter(v=>(v.name+v.id+v.code).toLowerCase().includes(q));
+ return `<h1>Voters registration</h1><div class="card"><h3>Add voter</h3><div class="grid2"><input id="vn" placeholder="Full name"><input id="va" placeholder="Address (optional)"></div><button class="btn" data-a="addv">Add voter and create V-CODE</button><h3 style="margin-top:18px">Import voters (CSV)</h3><p style="color:var(--mute);margin:0 0 8px;font-size:13px">One voter per line: name,address</p><input type="file" id="csv" accept=".csv,.txt"></div><div class="card"><input id="q" placeholder="Search voter…" value="${esc(ses.q)}"><div class="scroll"><table><tr><th>ID</th><th>V-CODE</th><th>Fullname</th><th>Status</th><th></th></tr>${L.map(v=>`<tr><td>${v.id}</td><td><b>${v.code}</b></td><td>${esc(v.name)}<br><small style="color:var(--mute)">${esc(v.addr)}</small></td><td><span class="badge ${v.used?"u":"n"}">${v.used?"Used":"Unused"}</span></td><td><button class="btn sm r" data-a="delv" data-i="${v.id}" aria-label="Delete voter">🗑</button></td></tr>`).join("")||'<tr><td colspan="5" style="text-align:center">No voters found.</td></tr>'}</table></div></div>`}
+
+function pPos(){return `<h1>Positions</h1><div class="card"><h3>Add position</h3><div class="grid2"><input id="pn" placeholder="Position name"><input id="pm" type="number" min="1" value="1" aria-label="Max votes"></div><button class="btn" data-a="addp">Add position</button></div><div class="card"><div class="scroll"><table><tr><th>Position</th><th>Max votes</th><th></th></tr>${D.pos.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.max}</td><td><button class="btn sm r" data-a="delp" data-i="${p.id}" aria-label="Delete position">🗑</button></td></tr>`).join("")}</table></div></div>`}
+
+function pCand(){return `<h1>Candidates</h1><div class="card"><h3>Add candidate</h3><div class="grid2"><input id="cf" placeholder="First name"><input id="cl" placeholder="Last name"></div><select id="cp">${D.pos.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select><input type="file" id="ph" accept="image/*"><button class="btn" data-a="addc">Save candidate</button></div><div class="card">${D.pos.map(p=>`<div class="pos-h" style="margin-top:0">${esc(p.name)}</div>${D.cand.filter(c=>c.pos==p.id).map(c=>`<div class="cr">${av(c)}<span class="n">${esc(c.name)}</span><button class="btn sm r" data-a="delc" data-i="${c.id}" aria-label="Delete candidate">🗑</button></div>`).join("")||'<p style="color:var(--mute)">No candidates.</p>'}`).join("")}</div>`}
+
+function sheet(){let h=`<h2 style="text-align:center;margin-bottom:6px;font-size:20px">OFFICIAL ELECTION RESULTS</h2>`;
+ D.pos.forEach(p=>{const cs=D.cand.filter(c=>c.pos==p.id).sort((a,b)=>tl(b.id)-tl(a.id)),tot=cs.reduce((a,c)=>a+tl(c.id),0),top=cs.slice(0,p.max).filter(c=>tl(c.id)>0);
+  h+=`<table class="rt"><tr><th colspan="2">${esc(p.name.toUpperCase())}</th></tr>${cs.map(c=>`<tr><td>${esc(c.name)}</td><td align="right">${tl(c.id)} vote${tl(c.id)==1?"":"s"}</td></tr>`).join("")}<tr><td align="right"><b>Total valid votes</b></td><td align="right"><b>${tot}</b></td></tr></table><div class="top"><b>Top candidates:</b> ${top.length?top.map((c,i)=>`🏆 Rank ${i+1}: ${esc(c.name)} (${tl(c.id)})`).join("<br>"):"No votes yet"}</div>`});
+ return `<div class="sheet">${h}</div>`}
+function pRes(){return `<h1>Results</h1><div class="bar-actions"><button class="btn sm g" data-a="print">🖨 Print</button><button class="btn sm" data-a="word">⬇ Download MS Word</button></div>${sheet()}`}
+
+function pAbout(){return `<h1>About admin</h1><div class="card"><h3>Change password</h3><input id="np" type="password" placeholder="New password" autocomplete="new-password"><button class="btn" data-a="cpw">Save password</button></div><div class="card"><h3>Reset</h3><div class="bar-actions"><button class="btn sm gray" data-a="rvotes">Reset all votes</button><button class="btn sm r" data-a="rall">Reset everything</button></div><p style="color:var(--mute);font-size:13px">Default password is <b>admin123</b>. Data is stored only in this browser, so use this for classroom, club, or practice elections, not high-stakes ones.</p></div>`}
+
+function render(){const r=ses.role;
+ app.innerHTML=r==null?vLogin(0):r=="adminlogin"?vLogin(1):r=="voter"?vVote():r=="done"?vDone():layout({dash:pDash,voters:pVoters,pos:pPos,cand:pCand,results:pRes,about:pAbout}[ses.page]())}
+
+const A={
+ home(){ses={role:null,page:"dash",sel:{},q:"",msg:""}},toadmin(){ses.role="adminlogin";ses.msg=""},
+ vlogin(){const c=$("#code").value.trim(),v=D.voters.find(x=>x.code==c);ses.msg=!v?"V-CODE not found.":v.used?"This V-CODE has already voted.":"";if(v&&!v.used){ses.role="voter";ses.v=v;ses.sel={}}},
+ alogin(){if($("#pw").value===D.pw){ses.role="admin";ses.msg=""}else ses.msg="Wrong password."},
+ nav(i){ses.page=i;ses.q=""},
+ pick(_,b){const p=b.dataset.p,c=b.dataset.c,P=D.pos.find(x=>x.id==p),s=ses.sel[p]||(ses.sel[p]=[]),k=s.indexOf(c);
+  if(k>=0)s.splice(k,1);else if(s.length<P.max)s.push(c);else if(P.max==1)ses.sel[p]=[c];else toast("You can choose up to "+P.max)},
+ submit(){const n=Object.values(ses.sel).reduce((a,s)=>a+s.length,0);if(!n)return toast("Choose at least one candidate");
+  if(!confirm("Submit your ballot? You can’t change it afterwards."))return;
+  Object.values(ses.sel).forEach(s=>s.forEach(c=>D.t[c]=tl(c)+1));D.voters.find(v=>v.id==ses.v.id).used=true;ses.role="done"},
+ addv(){const n=$("#vn").value.trim();if(!n)return toast("Enter a name");addVoter(n,$("#va").value.trim());toast("Voter added")},
+ delv(i){D.voters=D.voters.filter(v=>v.id!=i)},
+ addp(){const n=$("#pn").value.trim();if(!n)return toast("Enter a position name");D.pos.push({id:"p"+uid(),name:n,max:Math.max(1,+$("#pm").value||1)})},
+ delp(i){D.pos=D.pos.filter(p=>p.id!=i);D.cand=D.cand.filter(c=>c.pos!=i)},
+ addc(){const n=($("#cf").value+" "+$("#cl").value).trim(),p=$("#cp").value;if(!n||!p)return toast("Enter a name and position");D.cand.push({id:"c"+uid(),name:n,pos:p,photo:ses.photo});ses.photo="";toast("Candidate saved")},
+ delc(i){D.cand=D.cand.filter(c=>c.id!=i);delete D.t[i]},
+ print(){window.print()},
+ word(){const h=`<html><head><meta charset="utf-8"></head><body>${sheet()}</body></html>`,a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob(["\ufeff"+h],{type:"application/msword"}));a.download="election-results.doc";a.click()},
+ cpw(){const v=$("#np").value;if(v.length<4)return toast("Use at least 4 characters");D.pw=v;toast("Password changed")},
+ rvotes(){if(confirm("Reset all votes and make every V-CODE unused?")){D.t={};D.voters.forEach(v=>v.used=false)}},
+ rall(){if(confirm("Delete all data and start over?"))D=seed()}
+};
+app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const f=A[b.dataset.a];if(f){f(b.dataset.i,b);save();render()}});
+app.addEventListener("input",e=>{if(e.target.id=="q"){ses.q=e.target.value;render();const q=$("#q");q.focus();q.setSelectionRange(99,99)}});
+app.addEventListener("keydown",e=>{if(e.key=="Enter"&&(e.target.id=="code"||e.target.id=="pw")){const b=app.querySelector(".btn");b&&b.click()}});
+app.addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+ if(e.target.id=="csv"){const r=new FileReader();r.onload=()=>{let n=0;r.result.split(/\r?\n/).forEach((l,i)=>{const [a,...b]=l.split(",");if(!a.trim()||(i==0&&/name/i.test(a)))return;addVoter(a.trim(),b.join(",").trim());n++});save();render();toast(n+" voters imported")};r.readAsText(f)}
+ if(e.target.id=="ph"){const im=new Image();im.onload=()=>{const c=document.createElement("canvas");c.width=c.height=96;const s=Math.min(im.width,im.height);c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);ses.photo=c.toDataURL("image/jpeg",.7);toast("Photo ready")};im.src=URL.createObjectURL(f)}});
+render();
+</script>
+</body>
+</html>
