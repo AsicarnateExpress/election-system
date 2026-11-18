@@ -76,15 +76,18 @@ td{padding:10px;border-bottom:1px solid var(--line)}
 <body>
 <div id="app"></div>
 <div class="toast" id="toast" role="status"></div>
-<script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,doc,onSnapshot,setDoc,runTransaction} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// STEP: paste your Firebase settings here (see SETUP.md)
+const FIREBASE_CONFIG={apiKey:"PASTE_API_KEY",authDomain:"PASTE_AUTH_DOMAIN",projectId:"PASTE_PROJECT_ID",storageBucket:"PASTE_STORAGE_BUCKET",messagingSenderId:"PASTE_SENDER_ID",appId:"PASTE_APP_ID"};
 const K="election-v1",$=s=>document.querySelector(s),app=$("#app");
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const seed=()=>({pw:"admin123",n:3,
  pos:[{id:"p1",name:"President",max:1},{id:"p2",name:"Vice President",max:1}],
  cand:[{id:"c1",name:"Alex Rivera",pos:"p1"},{id:"c2",name:"Maya Santos",pos:"p1"},{id:"c3",name:"Jordan Lee",pos:"p2"},{id:"c4",name:"Sam Carter",pos:"p2"}],
  voters:[{id:"2026-001",code:"482913",name:"Demo Voter",addr:"Block 1",used:false},{id:"2026-002",code:"715204",name:"Sample Voter",addr:"Block 2",used:false}],t:{}});
-let D;try{D=JSON.parse(localStorage.getItem(K))||seed()}catch(e){D=seed()}
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(D))}catch(e){toast("Storage is full. Use smaller photos.")}};
+let D=seed(),ready=false,fb,ref;
 let ses={role:null,v:null,page:"dash",sel:{},q:"",msg:"",photo:""};
 const tl=id=>D.t[id]||0,uid=()=>Math.random().toString(36).slice(2,8);
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("show"),2000)}
@@ -120,9 +123,11 @@ function sheet(){let h=`<h2 style="text-align:center;margin-bottom:6px;font-size
  return `<div class="sheet">${h}</div>`}
 function pRes(){return `<h1>Results</h1><div class="bar-actions"><button class="btn sm g" data-a="print">🖨 Print</button><button class="btn sm" data-a="word">⬇ Download MS Word</button></div>${sheet()}`}
 
-function pAbout(){return `<h1>About admin</h1><div class="card"><h3>Change password</h3><input id="np" type="password" placeholder="New password" autocomplete="new-password"><button class="btn" data-a="cpw">Save password</button></div><div class="card"><h3>Reset</h3><div class="bar-actions"><button class="btn sm gray" data-a="rvotes">Reset all votes</button><button class="btn sm r" data-a="rall">Reset everything</button></div><p style="color:var(--mute);font-size:13px">Default password is <b>admin123</b>. Data is stored only in this browser, so use this for classroom, club, or practice elections, not high-stakes ones.</p></div>`}
+function pAbout(){return `<h1>About admin</h1><div class="card"><h3>Change password</h3><input id="np" type="password" placeholder="New password" autocomplete="new-password"><button class="btn" data-a="cpw">Save password</button></div><div class="card"><h3>Reset</h3><div class="bar-actions"><button class="btn sm gray" data-a="rvotes">Reset all votes</button><button class="btn sm r" data-a="rall">Reset everything</button></div><p style="color:var(--mute);font-size:13px">Default password is <b>admin123</b>. Votes are shared live through Firebase. The password and V-CODEs are not hidden from technical users, so use this for school, club, or community polls, not binding elections.</p></div>`}
 
-function render(){const r=ses.role;
+function boot(){const c=FIREBASE_CONFIG,setup=!c.apiKey||c.apiKey.startsWith("PASTE");
+ return `<div class="center"><div class="login"><div class="logo">🗳️</div><h1>${setup?"Setup needed":ses.fatal?"Can’t connect":"Loading…"}</h1><p>${setup?"Paste your Firebase settings into the FIREBASE_CONFIG block at the top of index.html. See SETUP.md.":esc(ses.fatal||"Connecting to the shared election.")}</p></div></div>`}
+function render(){if(!ready){app.innerHTML=boot();return}const r=ses.role;
  app.innerHTML=r==null?vLogin(0):r=="adminlogin"?vLogin(1):r=="voter"?vVote():r=="done"?vDone():layout({dash:pDash,voters:pVoters,pos:pPos,cand:pCand,results:pRes,about:pAbout}[ses.page]())}
 
 const A={
@@ -132,9 +137,8 @@ const A={
  nav(i){ses.page=i;ses.q=""},
  pick(_,b){const p=b.dataset.p,c=b.dataset.c,P=D.pos.find(x=>x.id==p),s=ses.sel[p]||(ses.sel[p]=[]),k=s.indexOf(c);
   if(k>=0)s.splice(k,1);else if(s.length<P.max)s.push(c);else if(P.max==1)ses.sel[p]=[c];else toast("You can choose up to "+P.max)},
- submit(){const n=Object.values(ses.sel).reduce((a,s)=>a+s.length,0);if(!n)return toast("Choose at least one candidate");
-  if(!confirm("Submit your ballot? You can’t change it afterwards."))return;
-  Object.values(ses.sel).forEach(s=>s.forEach(c=>D.t[c]=tl(c)+1));D.voters.find(v=>v.id==ses.v.id).used=true;ses.role="done"},
+ submit(){const v=D.voters.find(x=>x.id==ses.v.id);if(!v||v.used){ses.msg="This V-CODE has already voted.";ses.role=null;return false}
+  Object.values(ses.sel).forEach(s=>s.forEach(c=>D.t[c]=tl(c)+1));v.used=true;ses.role="done"},
  addv(){const n=$("#vn").value.trim();if(!n)return toast("Enter a name");addVoter(n,$("#va").value.trim());toast("Voter added")},
  delv(i){D.voters=D.voters.filter(v=>v.id!=i)},
  addp(){const n=$("#pn").value.trim();if(!n)return toast("Enter a position name");D.pos.push({id:"p"+uid(),name:n,max:Math.max(1,+$("#pm").value||1)})},
@@ -145,15 +149,23 @@ const A={
  word(){const h=`<html><head><meta charset="utf-8"></head><body>${sheet()}</body></html>`,a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob(["\ufeff"+h],{type:"application/msword"}));a.download="election-results.doc";a.click()},
  cpw(){const v=$("#np").value;if(v.length<4)return toast("Use at least 4 characters");D.pw=v;toast("Password changed")},
- rvotes(){if(confirm("Reset all votes and make every V-CODE unused?")){D.t={};D.voters.forEach(v=>v.used=false)}},
- rall(){if(confirm("Delete all data and start over?"))D=seed()}
+ rvotes(){D.t={};D.voters.forEach(v=>v.used=false)},
+ rall(){D=seed()}
 };
-app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const f=A[b.dataset.a];if(f){f(b.dataset.i,b);save();render()}});
+const DATA=new Set(["submit","addv","delv","addp","delp","addc","delc","cpw","rvotes","rall"]);
+const PRE={submit:()=>{if(!Object.values(ses.sel).reduce((a,s)=>a+s.length,0)){toast("Choose at least one candidate");return false}return confirm("Submit your ballot? You can’t change it afterwards.")},rvotes:()=>confirm("Reset all votes and make every V-CODE unused?"),rall:()=>confirm("Delete all data and start over?")};
+async function run(k,i,b){if(PRE[k]&&!PRE[k]())return;
+ try{await runTransaction(fb,async tx=>{const s=await tx.get(ref);D=s.exists()?s.data():seed();if(A[k](i,b)!==false)tx.set(ref,D)})}catch(err){toast("Couldn’t save. Check your connection and try again.");if(ses.role=="done")ses.role="voter"}
+ render()}
+app.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const k=b.dataset.a;if(!A[k])return;if(DATA.has(k))run(k,b.dataset.i,b);else{A[k](b.dataset.i,b);render()}});
 app.addEventListener("input",e=>{if(e.target.id=="q"){ses.q=e.target.value;render();const q=$("#q");q.focus();q.setSelectionRange(99,99)}});
 app.addEventListener("keydown",e=>{if(e.key=="Enter"&&(e.target.id=="code"||e.target.id=="pw")){const b=app.querySelector(".btn");b&&b.click()}});
 app.addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
- if(e.target.id=="csv"){const r=new FileReader();r.onload=()=>{let n=0;r.result.split(/\r?\n/).forEach((l,i)=>{const [a,...b]=l.split(",");if(!a.trim()||(i==0&&/name/i.test(a)))return;addVoter(a.trim(),b.join(",").trim());n++});save();render();toast(n+" voters imported")};r.readAsText(f)}
+ if(e.target.id=="csv"){const r=new FileReader();r.onload=async()=>{const rows=[];r.result.split(/\r?\n/).forEach((l,i)=>{const [a,...b]=l.split(",");if(!a.trim()||(i==0&&/name/i.test(a)))return;rows.push([a.trim(),b.join(",").trim()])});
+  try{await runTransaction(fb,async tx=>{const s=await tx.get(ref);D=s.exists()?s.data():seed();rows.forEach(x=>addVoter(x[0],x[1]));tx.set(ref,D)});toast(rows.length+" voters imported")}catch(e){toast("Import failed")}render()};r.readAsText(f)}
  if(e.target.id=="ph"){const im=new Image();im.onload=()=>{const c=document.createElement("canvas");c.width=c.height=96;const s=Math.min(im.width,im.height);c.getContext("2d").drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);ses.photo=c.toDataURL("image/jpeg",.7);toast("Photo ready")};im.src=URL.createObjectURL(f)}});
+if(FIREBASE_CONFIG.apiKey&&!FIREBASE_CONFIG.apiKey.startsWith("PASTE")){try{fb=getFirestore(initializeApp(FIREBASE_CONFIG));ref=doc(fb,"election","main");
+ onSnapshot(ref,x=>{if(!x.exists()){setDoc(ref,seed());return}D=x.data();ready=true;const a=document.activeElement;if(a&&app.contains(a)&&/INPUT|SELECT/.test(a.tagName))return;render()},err=>{ses.fatal="Can’t reach Firebase. Check your settings and Firestore rules.";render()})}catch(e){ses.fatal="Firebase setup error: "+e.message}}
 render();
 </script>
 </body>
